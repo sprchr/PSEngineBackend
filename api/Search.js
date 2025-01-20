@@ -17,7 +17,7 @@ import XLSX from "xlsx";
 dotenv.config();
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
+const upload = multer({ dest: "/tmp" });
 
 // Initialize Pinecone
 const pinecone = new Pinecone({
