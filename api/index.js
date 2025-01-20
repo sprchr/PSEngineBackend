@@ -6,14 +6,14 @@ import Search from "./Search.js";
 const app = express();
 const port = 3001;
 
-// app.use(cors({
-//   origin: 'https://rag-ui-eta.vercel.app', // Allow only this domain
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these HTTP methods
-//   allowedHeaders: ['Content-Type', 'Authorization'] // Allow specific headers
-// }));
 app.use(cors({
-   origin:'http://localhost:5173'
-}))
+ origin: 'https://persona-snowy.vercel.app/', // Allow only this domain
+ methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'] // Allow specific headers
+ }));
+//app.use(cors({
+  // origin:'http://localhost:5173'
+//}))
 app.use(express.json())
 
 // POST endpoint to add a new message
