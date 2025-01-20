@@ -7,7 +7,7 @@ const app = express();
 const port = 3001;
 
 app.use(cors({
- origin: 'https://persona-snowy.vercel.app/', // Allow only this domain
+ origin: 'https://persona-snowy.vercel.app', // Allow only this domain
  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow these HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allow specific headers
  }));
