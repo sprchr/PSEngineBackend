@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 
 
-import Search from "./api/Search.js";
+import Search from "./Search.js";
 const app = express();
 const port = 3001;
 
