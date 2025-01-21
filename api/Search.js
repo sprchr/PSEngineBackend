@@ -42,8 +42,8 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
       const pdffile = await pdfLoader.load();
       console.log(pdffile);
       const textSplitter = new CharacterTextSplitter({
-        chunkSize: 10000,
-        chunkOverlap: 0,
+        chunkSize: 5000,
+        chunkOverlap: 200,
       });
       docs = await textSplitter.splitDocuments(pdffile)
     } else if (fileType === "text/csv") {
