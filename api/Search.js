@@ -40,12 +40,16 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
     if (fileType === "application/pdf") {
       const pdfLoader = new PDFLoader(file.path);
       const pdffile = await pdfLoader.load();
-      console.log(pdffile);
+      const combinedText = pdffile.map(doc => doc.pageContent).join("\n");
+
+      // Use the CharacterTextSplitter on the combined text
       const textSplitter = new CharacterTextSplitter({
-        chunkSize: 5000,
-        chunkOverlap: 200,
+        chunkSize: 1000,
+        chunkOverlap: 100,
       });
-      docs = await textSplitter.splitDocuments(pdffile)
+      
+      docs = await textSplitter.createDocuments([combinedText]);
+     
     } else if (fileType === "text/csv") {
       const loader = new CSVLoader(file.path); // Replace `filePath` with the actual path
     docs = await loader.load(); // Load all rows as documents
@@ -77,22 +81,28 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
       const docxLoader = new DocxLoader(file.path); // Initialize Word document loader
       const wordFile = await docxLoader.load(); // Load the Word document
 
+      const combinedText = wordFile.map(doc => doc.pageContent).join("\n");
+
+      // Use the CharacterTextSplitter on the combined text
       const textSplitter = new CharacterTextSplitter({
-        chunkSize: 10000,
-        chunkOverlap: 0,
+        chunkSize: 1000,
+        chunkOverlap: 100,
       });
-     
-      docs = await textSplitter.splitDocuments(wordFile);
+      
+      docs = await textSplitter.createDocuments([combinedText]);
       
     } else if (fileType === "text/plain") {
       const textLoader = new TextLoader(file.path);
       const textFile = await textLoader.load();
+      const combinedText = textFile.map(doc => doc.pageContent).join("\n");
+
+      // Use the CharacterTextSplitter on the combined text
       const textSplitter = new CharacterTextSplitter({
         chunkSize: 1000,
-        chunkOverlap: 0,
+        chunkOverlap: 100,
       });
-
-      docs = await textSplitter.splitDocuments(textFile);
+      
+      docs = await textSplitter.createDocuments([combinedText]);
     } else if (
       fileType ===
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -140,10 +150,12 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
 
       // docs = await textSplitter.splitDocuments(documents);
       docs = documents
+   
+      
     } else {
       return res.status(400).json({ message: "Unsupported file type." });
     }
-    console.log(docs);
+  
     if (!docs || docs.length === 0) {
       throw new Error("No documents found to process.");
     }
