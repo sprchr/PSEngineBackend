@@ -42,7 +42,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
       const pdffile = await pdfLoader.load();
       console.log(pdffile);
       const textSplitter = new CharacterTextSplitter({
-        chunkSize: 1000,
+        chunkSize: 10000,
         chunkOverlap: 0,
       });
       docs = await textSplitter.splitDocuments(pdffile)
@@ -51,7 +51,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
     docs = await loader.load(); // Load all rows as documents
 
   // Optional: Batch rows into groups of 100
-  const batchSize = 50;
+  const batchSize = 1000;
   const batchedDocs = [];
   let batch = [];
 
@@ -78,7 +78,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
       const wordFile = await docxLoader.load(); // Load the Word document
 
       const textSplitter = new CharacterTextSplitter({
-        chunkSize: 1000,
+        chunkSize: 10000,
         chunkOverlap: 0,
       });
      
@@ -116,7 +116,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
       };
 
       // Group rows into chunks of 100
-      const groupedData = chunkArray(excelData, 100);
+      const groupedData = chunkArray(excelData, 1000);
 
       // Convert each chunk into a document
       const documents = groupedData.map((chunk, index) => {
@@ -356,7 +356,7 @@ router.post("/search/:index", async (req, res) => {
     const embedding = new OpenAIEmbeddings();
     const queryEmbedding = await embedding.embedQuery(query);
     const searchResponse = await index.query({
-      topK: 3, // Number of top matches
+      topK: 6, // Number of top matches
       vector: queryEmbedding, // Replace with your embedding generation logic for the query
       includeMetadata: true,
       includeValues: true,
