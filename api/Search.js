@@ -32,34 +32,36 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
     if (!file) {
       return res.status(400).json({ message: "No  file uploaded." });
     }
-    let docs;
+    let docs= [];
 
-    // Identify file type and use the appropriate loader
     const fileType = file.mimetype;
-    console.log(fileType);
+    // console.log(fileType);
     if (fileType === "application/pdf") {
       const pdfLoader = new PDFLoader(file.path);
-      const pdffile = await pdfLoader.load();
-      const combinedText = pdffile.map(doc => doc.pageContent).join("\n");
+      const pdffile = await pdfLoader.load(); 
+    
+     const combinedContent = pdffile.map(doc => doc.pageContent).join();
 
-      // Use the CharacterTextSplitter on the combined text
-      const textSplitter = new CharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 100,
-      });
-      
-      docs = await textSplitter.createDocuments([combinedText]);
+     const chunkSize = 20000;
+     const chunkOverlap = 2000;  
+  
      
+     for (let i = 0; i < combinedContent.length; i += chunkSize - chunkOverlap) {
+       // Extract a chunk of 8000 characters (with overlap if needed)
+       const chunk = combinedContent.slice(i, i + chunkSize);
+       docs.push({ pageContent: chunk });
+     }
+  
     } else if (fileType === "text/csv") {
       const loader = new CSVLoader(file.path); // Replace `filePath` with the actual path
-    docs = await loader.load(); // Load all rows as documents
+      docs = await loader.load(); // Load all rows as documents
 
   // Optional: Batch rows into groups of 100
-  const batchSize = 1000;
-  const batchedDocs = [];
-  let batch = [];
+    const batchSize = 1000;
+    const batchedDocs = [];
+    let batch = [];
 
-  for (let i = 0; i < docs.length; i++) {
+    for (let i = 0; i < docs.length; i++) {
     batch.push(docs[i]);
     if ((i + 1) % batchSize === 0 || i === docs.length - 1) {
       const combinedContent = batch.map(doc => doc.pageContent).join("\n");
@@ -83,26 +85,41 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
 
       const combinedText = wordFile.map(doc => doc.pageContent).join("\n");
 
-      // Use the CharacterTextSplitter on the combined text
-      const textSplitter = new CharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 100,
-      });
-      
-      docs = await textSplitter.createDocuments([combinedText]);
+   
+      //  console.log("Combined Content Length:", combinedContent.length);
+  
+       const chunkSize = 20000;
+       const chunkOverlap = 2000;  // Optional: Adjust overlap if necessary
+    
+       
+       for (let i = 0; i < combinedText.length; i += chunkSize - chunkOverlap) {
+         // Extract a chunk of 8000 characters (with overlap if needed)
+         const chunk = combinedText.slice(i, i + chunkSize);
+         docs.push({ pageContent: chunk });
+       }
+       
       
     } else if (fileType === "text/plain") {
       const textLoader = new TextLoader(file.path);
       const textFile = await textLoader.load();
       const combinedText = textFile.map(doc => doc.pageContent).join("\n");
 
-      // Use the CharacterTextSplitter on the combined text
-      const textSplitter = new CharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 100,
-      });
+     
+
+   
+      //  console.log("Combined Content Length:", combinedContent.length);
+  
+       const chunkSize = 20000;
+       const chunkOverlap = 2000;  // Optional: Adjust overlap if necessary
+    
+       
+       for (let i = 0; i < combinedText.length; i += chunkSize - chunkOverlap) {
+         // Extract a chunk of 8000 characters (with overlap if needed)
+         const chunk = combinedText.slice(i, i + chunkSize);
+         docs.push({ pageContent: chunk });
+       }
+       
       
-      docs = await textSplitter.createDocuments([combinedText]);
     } else if (
       fileType ===
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -141,17 +158,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
           },
         };
       });
-
-      // Example of how you might split documents (if needed)
-      // const textSplitter = new CharacterTextSplitter({
-      //   chunkSize: 1000,
-      //   chunkOverlap: 0,
-      // });
-
-      // docs = await textSplitter.splitDocuments(documents);
       docs = documents
-   
-      
     } else {
       return res.status(400).json({ message: "Unsupported file type." });
     }
@@ -167,7 +174,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
     const vectors = await embeddings.embedDocuments(
       docs.map((doc) => doc.pageContent)
     );
-
+    console.log(docs.length)
     // Prepare vectors with metadata
     const index = pinecone.index(docIndex);
     const vectorsWithMetadata = vectors.map((embedding, index) => ({
