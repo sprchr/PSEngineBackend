@@ -44,8 +44,8 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
 
       // Use the CharacterTextSplitter on the combined text
       const textSplitter = new CharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 100,
+        chunkSize: 500,
+        chunkOverlap: 0,
       });
       
       docs = await textSplitter.createDocuments([combinedText]);
