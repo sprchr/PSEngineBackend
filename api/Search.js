@@ -43,7 +43,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
      const combinedContent = pdffile.map(doc => doc.pageContent).join();
 
      const chunkSize = 20000;
-     const chunkOverlap = 2000;  
+     const chunkOverlap = 500;  
   
      
      for (let i = 0; i < combinedContent.length; i += chunkSize - chunkOverlap) {
@@ -89,7 +89,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
       //  console.log("Combined Content Length:", combinedContent.length);
   
        const chunkSize = 20000;
-       const chunkOverlap = 2000;  // Optional: Adjust overlap if necessary
+       const chunkOverlap = 500;  // Optional: Adjust overlap if necessary
     
        
        for (let i = 0; i < combinedText.length; i += chunkSize - chunkOverlap) {
@@ -110,7 +110,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
       //  console.log("Combined Content Length:", combinedContent.length);
   
        const chunkSize = 20000;
-       const chunkOverlap = 2000;  // Optional: Adjust overlap if necessary
+       const chunkOverlap = 500;  // Optional: Adjust overlap if necessary
     
        
        for (let i = 0; i < combinedText.length; i += chunkSize - chunkOverlap) {
