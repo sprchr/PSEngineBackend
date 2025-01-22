@@ -375,7 +375,7 @@ router.post("/search/:index", async (req, res) => {
     const embedding = new OpenAIEmbeddings();
     const queryEmbedding = await embedding.embedQuery(query);
     const searchResponse = await index.query({
-      topK: 6, // Number of top matches
+      topK: 10, // Number of top matches
       vector: queryEmbedding, // Replace with your embedding generation logic for the query
       includeMetadata: true,
       includeValues: true,
