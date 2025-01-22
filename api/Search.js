@@ -39,16 +39,13 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
     console.log(fileType);
     if (fileType === "application/pdf") {
       const pdfLoader = new PDFLoader(file.path);
-      const pdffile = await pdfLoader.load();
-      const combinedText = pdffile.map(doc => doc.pageContent).join("\n");
-
-      // Use the CharacterTextSplitter on the combined text
+     const pdffile = await pdfLoader.load();
+      console.log(pdffile);
       const textSplitter = new CharacterTextSplitter({
-        chunkSize: 500,
-        chunkOverlap: 0,
+        chunkSize: 5000,
+        chunkOverlap: 200,
       });
-      
-      docs = await textSplitter.createDocuments([combinedText]);
+      docs = await textSplitter.splitDocuments(pdffile)      
      
     } else if (fileType === "text/csv") {
       const loader = new CSVLoader(file.path); // Replace `filePath` with the actual path
