@@ -44,106 +44,312 @@ This repository contains an Express.js-based API for processing, embedding, and 
 ## API Endpoints
 
 ### 1. Upload Document
+
+**Endpoint**:  
 **POST** `/upload/:index`
-- Uploads a document, processes it based on its type, and stores the embeddings in Pinecone.
-
-**Request:**
-- `file` (form-data): The file to upload.
-- `index` (path): The Pinecone index to store the embeddings.
-
-**Response:**
-- Status 200: Success message with details of the operation.
-- Status 400: Error if no file is uploaded or unsupported file type.
-- Status 500: Internal server error.
 
 ---
+
+#### **Description**:  
+Uploads a document, processes it based on its type, and stores the embeddings in Pinecone.
+
+---
+
+#### **Process**:  
+1. The function identifies the type of file being uploaded (e.g., PDF, Word, etc.) and uses the appropriate **document loader** from **LangChain (npm)** to parse the file.  
+2. The extracted data is divided into smaller **documents** based on required document size and embedding limits.  
+3. These documents are converted into **embeddings** using the **OpenAI Embedding model**, generating vector representations.  
+4. The generated vectors, along with **metadata**, are **upserted** into the specified **Pinecone database index** for future use.
+
+---
+
+#### **Request Parameters**:  
+
+1. **Path Parameter**:
+   - `index` (string): The name of the Pinecone index where the embeddings will be stored.
+
+2. **Form-Data**:
+   - `file` (file): The document file to upload.
+
+---
+
+#### **Response**:  
+
+1. **Success**:
+   - **Status 200**:
+     - Success message detailing the operation, including information about the number of documents processed and stored.
+
+2. **Client Error**:
+   - **Status 400**:
+     - Error message if:
+       - No file is uploaded.
+       - The file type is unsupported.
+
+3. **Server Error**:
+   - **Status 500**:
+     - Internal server error message if something goes wrong during processing.
+
+---
+
 
 ### 2. List Uploaded Files
+
+**Endpoint**:  
 **GET** `/files/:index`
-- Retrieves a list of uploaded files for a specific index.
-
-**Request:**
-- `index` (path): The Pinecone index to retrieve files from.
-
-**Response:**
-- Status 200: List of unique file titles.
-- Status 500: Internal server error.
 
 ---
+
+#### **Description**:  
+Retrieves a list of uploaded files for a specific Pinecone index.
+
+---
+
+#### **Process**:  
+1. The API identifies the **index** specified in the request.  
+2. The `list_paginated` function from **Pinecone** is used to retrieve all records from the specified index (limited to 100 records).  
+3. The obtained records are **cleaned** and **filtered**, extracting only the unique filenames from the metadata.  
+4. The list of filenames is returned as the response.
+
+---
+
+#### **Request Parameters**:  
+
+1. **Path Parameter**:
+   - `index` (string): The name of the Pinecone index from which to retrieve file information.
+
+---
+
+#### **Response**:  
+
+1. **Success**:
+   - **Status 200**:
+     - Returns a list of unique file titles stored in the specified index.
+
+2. **Server Error**:
+   - **Status 500**:
+     - Internal server error message if something goes wrong during processing.
+
+---
+
 
 ### 3. Delete Files
+
+**Endpoint**:  
 **DELETE** `/files/:index`
-- Deletes files from a specific index based on the provided file ID.
-
-**Request:**
-- `index` (path): The Pinecone index.
-- `file` (body): The file ID to delete.
-
-**Response:**
-- Status 200: Success message with deleted file IDs.
-- Status 400: Error if file ID is not provided.
-- Status 500: Internal server error.
 
 ---
 
+#### **Description**:  
+Deletes files from a specific Pinecone index based on the provided file ID.
+
+---
+
+#### **Process**:  
+1. The API first uses **list_paginated** to fetch all the records from the specified index.  
+2. The **filename** obtained in the request is used to identify records that start with the provided filename.  
+3. The filtered records are deleted using Pinecone’s **`index.deletemany`** function.
+
+---
+
+#### **Request Parameters**:  
+
+1. **Path Parameter**:
+   - `index` (string): The name of the Pinecone index from which to delete files.
+
+2. **Body**:
+   - `file` (string): The **file ID** of the document to delete.
+
+---
+
+#### **Response**:  
+
+1. **Success**:
+   - **Status 200**:
+     - Success message with the IDs of the deleted files.
+
+2. **Client Error**:
+   - **Status 400**:
+     - Error message if no file ID is provided in the request.
+
+3. **Server Error**:
+   - **Status 500**:
+     - Internal server error message if something goes wrong during processing.
+
+---
+
+
 ### 4. List Indexes
+
+**Endpoint**:  
 **GET** `/index`
-- Lists all Pinecone indexes.
 
-**Request:**
-- `name` (query): Optional filter to search indexes by name.
+---
 
-**Response:**
-- Status 200: List of index names.
-- Status 500: Internal server error.
+#### **Description**:  
+Lists all Pinecone indexes for a specific user.
+
+---
+
+#### **Process**:  
+1. The API uses the **user ID** provided in the request to fetch all the indexes associated with that user.  
+2. The **`list_indexes`** function of Pinecone is called to retrieve the list of indexes.  
+3. Optionally, if a **`name`** query parameter is provided, the list can be filtered by index name.
+
+---
+
+#### **Request Parameters**:  
+
+1. **Query Parameter**:
+   - `name` (string, optional): A filter to search indexes by their name.
+
+---
+
+#### **Response**:  
+
+1. **Success**:
+   - **Status 200**:
+     - Returns a list of index names.
+
+2. **Server Error**:
+   - **Status 500**:
+     - Internal server error message if something goes wrong during processing.
 
 ---
 
 ### 5. Create Index
+
+**Endpoint**:  
 **POST** `/index/:user`
-- Creates a new Pinecone index.
 
-**Request:**
-- `user` (path): The user identifier.
-- `indexName` (body): The name of the index to create.
+---
 
-**Response:**
-- Status 200: Success message.
-- Status 400: Error if index name is not provided.
-- Status 500: Internal server error.
+#### **Description**:  
+Creates a new Pinecone index for a specific user.
 
-**Steps:**
-- choosing metrics used for querying (cosine,euclidian,2-point)
-- dimensions based on embedding model you are using (azure,openai)  
+---
+
+#### **Process**:  
+1. The API accepts the **user identifier** and the **index name** to create the new index.  
+2. The following parameters are configured for the new index:
+   - **Metrics**: Choose the metric used for querying (e.g., cosine, Euclidean, 2-point).
+   - **Embedding Model**: Based on the required vector size (dimensions), the appropriate embedding model is selected. Possible models include:
+     - **Microsoft**: `multilingual-e5-large`
+     - **OpenAI**: `text-embedding-3-small`, `text-embedding-3-large`, `text-embedding-ada-002`
+   - **Cloud Provider & Region**: Specify the cloud service (e.g., AWS, Azure, GCP) and the region for the index deployment.
+
+---
+
+#### **Request Parameters**:  
+
+1. **Path Parameter**:
+   - `user` (string): The user identifier for the index creation.
+
+2. **Body**:
+   - `indexName` (string): The name of the index to create.
+
+---
+
+#### **Response**:  
+
+1. **Success**:
+   - **Status 200**:
+     - Success message indicating that the index has been created.
+
+2. **Client Error**:
+   - **Status 400**:
+     - Error message if no index name is provided in the request.
+
+3. **Server Error**:
+   - **Status 500**:
+     - Internal server error message if something goes wrong during the index creation process.
 
 ---
 
 ### 6. Delete Index
+
+**Endpoint**:  
 **DELETE** `/index/:index`
-- Deletes a specific Pinecone index.
-
-**Request:**
-- `index` (path): The name of the index to delete.
-
-**Response:**
-- Status 200: Success message.
-- Status 400: Error if index name is not provided.
-- Status 500: Internal server error.
 
 ---
 
+#### **Description**:  
+Deletes a specific Pinecone index.
+
+---
+
+#### **Process**:  
+1. The **index name** is provided in the API request and concatenated with the **user ID**.
+2. The **`delete_index`** function from Pinecone is then used to delete the specified index.
+
+---
+
+#### **Request Parameters**:  
+
+1. **Path Parameter**:
+   - `index` (string): The name of the index to delete.
+
+---
+
+#### **Response**:  
+
+1. **Success**:
+   - **Status 200**:
+     - Success message indicating the index has been deleted.
+
+2. **Client Error**:
+   - **Status 400**:
+     - Error message if no index name is provided in the request.
+
+3. **Server Error**:
+   - **Status 500**:
+     - Internal server error message if something goes wrong during the deletion process.
+
+---
 ### 7. Search
+
+**Endpoint**:  
 **POST** `/search/:index`
-- Performs a similarity search using Pinecone.
 
-**Request:**
-- `index` (path): The Pinecone index.
-- `query` (body): The search query string.
+---
 
-**Response:**
-- Status 200: Search results with context and generated answers.
-- Status 400: Error if query is invalid.
-- Status 500: Internal server error.
+#### **Description**:  
+Performs a similarity search using Pinecone to retrieve the most relevant results based on a given query.
+
+---
+
+#### **Process**:  
+1. The **query** is converted into an embedding using the **OpenAI Embedding model**.
+2. The embedding is passed to the **Pinecone `index.query`** method along with arguments like the number of top matches to be fetched and other query parameters.
+3. The results from Pinecone are then sent to the **OpenAI LLM (Large Language Model)**, along with the original query text, to generate a context-based response.
+
+---
+
+#### **Request Parameters**:  
+
+1. **Path Parameter**:
+   - `index` (string): The Pinecone index to search within.
+
+2. **Body**:
+   - `query` (string): The search query string for the similarity search.
+
+---
+
+#### **Response**:  
+
+1. **Success**:
+   - **Status 200**:
+     - Returns the search results with context and generated answers based on the query.
+
+2. **Client Error**:
+   - **Status 400**:
+     - Error message if the query is invalid or malformed.
+
+3. **Server Error**:
+   - **Status 500**:
+     - Internal server error message if something goes wrong during the search or response generation process.
+
+---
+
 
 ## Supported File Types
 - PDF
