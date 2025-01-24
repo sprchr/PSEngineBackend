@@ -1,7 +1,5 @@
-// Import necessary modules
 import { Pinecone } from "@pinecone-database/pinecone";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-import { CharacterTextSplitter } from "@langchain/textsplitters";
 import dotenv from "dotenv";
 import express from "express";
 import multer from "multer";
@@ -9,8 +7,6 @@ import { OpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 import { TextLoader } from "langchain/document_loaders/fs/text";
-import fs from 'fs'
-import csv from 'csv-parser'
 import XLSX from "xlsx";
 
 
@@ -28,14 +24,14 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
     const docIndex = req.params.index;
-    //  console.log(file.originalname)
+
     if (!file) {
       return res.status(400).json({ message: "No  file uploaded." });
     }
     let docs= [];
 
     const fileType = file.mimetype;
-    // console.log(fileType);
+
     if (fileType === "application/pdf") {
       const pdfLoader = new PDFLoader(file.path);
       const pdffile = await pdfLoader.load(); 
@@ -47,16 +43,16 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
   
      
      for (let i = 0; i < combinedContent.length; i += chunkSize - chunkOverlap) {
-       // Extract a chunk of 8000 characters (with overlap if needed)
+       // Extract a chunk of  characters (with overlap if needed)
        const chunk = combinedContent.slice(i, i + chunkSize);
        docs.push({ pageContent: chunk });
      }
   
     } else if (fileType === "text/csv") {
-      const loader = new CSVLoader(file.path); // Replace `filePath` with the actual path
+      const loader = new CSVLoader(file.path); 
       docs = await loader.load(); // Load all rows as documents
 
-  // Optional: Batch rows into groups of 100
+  // Optional: Batch rows into groups
     const batchSize = 1000;
     const batchedDocs = [];
     let batch = [];
@@ -80,20 +76,19 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       fileType === "application/msword"
     ) {
-      const docxLoader = new DocxLoader(file.path); // Initialize Word document loader
-      const wordFile = await docxLoader.load(); // Load the Word document
+      const docxLoader = new DocxLoader(file.path); 
+      const wordFile = await docxLoader.load(); 
 
       const combinedText = wordFile.map(doc => doc.pageContent).join("\n");
 
    
-      //  console.log("Combined Content Length:", combinedContent.length);
   
        const chunkSize = 20000;
-       const chunkOverlap = 500;  // Optional: Adjust overlap if necessary
+       const chunkOverlap = 500;  
     
        
        for (let i = 0; i < combinedText.length; i += chunkSize - chunkOverlap) {
-         // Extract a chunk of 8000 characters (with overlap if needed)
+        
          const chunk = combinedText.slice(i, i + chunkSize);
          docs.push({ pageContent: chunk });
        }
@@ -107,14 +102,14 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
      
 
    
-      //  console.log("Combined Content Length:", combinedContent.length);
+  
   
        const chunkSize = 20000;
-       const chunkOverlap = 500;  // Optional: Adjust overlap if necessary
+       const chunkOverlap = 500;  
     
        
        for (let i = 0; i < combinedText.length; i += chunkSize - chunkOverlap) {
-         // Extract a chunk of 8000 characters (with overlap if needed)
+       
          const chunk = combinedText.slice(i, i + chunkSize);
          docs.push({ pageContent: chunk });
        }
@@ -142,7 +137,7 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
         return result;
       };
 
-      // Group rows into chunks of 100
+      // Group rows into chunks 
       const groupedData = chunkArray(excelData, 1000);
 
       // Convert each chunk into a document
@@ -190,10 +185,10 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
     if (!Array.isArray(vectorsWithMetadata)) {
       throw new Error("Vectors data is not in the expected format.");
     }
-    // console.log(vectorsWithMetadata)
+
     const upsertResponse = await index.upsert(vectorsWithMetadata);
 
-    //  console.log("Vector store saved successfully.");
+    
 
     res.send(upsertResponse);
   } catch (error) {
@@ -205,9 +200,8 @@ router.post("/upload/:index", upload.single("file"), async (req, res) => {
 router.get("/files/:index", async (req, res) => {
   const docIndex = req.params.index;
 
-  // console.log(docIndex)
+
   try {
-    // Reference to the "files" collection in Firebase Firestore
     const index = pinecone.index(docIndex);
     const results = (await index.listPaginated()).vectors;
     const ids = results.map((item) => item.id);
@@ -228,7 +222,6 @@ router.delete("/files/:index", async (req, res) => {
   const docIndex = req.params.index;
   try {
     const fileId = req.body.file;
-    // console.log(fileId)
 
     if (!fileId) {
       return res.status(400).json({ error: "File ID is required." });
@@ -236,10 +229,9 @@ router.delete("/files/:index", async (req, res) => {
 
     const index = pinecone.index(docIndex);
 
-    // List all vectors from the index
     const results = (await index.listPaginated()).vectors;
 
-    // Extract IDs and filter those matching the given fileId
+
     const ids = results.map((item) => item.id);
     const filteredIds = ids.filter((item) => item.startsWith(fileId));
 
@@ -249,10 +241,10 @@ router.delete("/files/:index", async (req, res) => {
         .json({ message: "No matching files found for deletion." });
     }
 
-    // Delete the filtered IDs
+
     await index.deleteMany(filteredIds);
 
-    // console.log("Deleted files:", filteredIds);
+ 
 
     return res.status(200).json({
       message: "Files deleted successfully.",
@@ -286,7 +278,7 @@ router.get("/index", async (req, res) => {
   } catch (error) {
     console.error("Error fetching indexes:", error);
 
-    // Handle errors gracefully
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch indexes.",
@@ -393,8 +385,7 @@ router.post("/search/:index", async (req, res) => {
     const context = results
       .map((result) => result.metadata.pageContent)
       .join("\n");
-    // console.log(context);
-
+ 
     // Prepare a prompt for the LLM
     const prompt = `Answer the following question based on the context below:\n\nContext:\n${context}\n\nQuestion: ${query}\nAnswer:`;
 

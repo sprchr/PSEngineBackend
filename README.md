@@ -12,7 +12,7 @@ This repository contains an Express.js-based API for processing, embedding, and 
 - Manage Pinecone indexes and vectors, including creation, deletion, and retrieval.
 
 ## Prerequisites
-- Node.js (>=14.x)
+- Node.js 
 - Pinecone account and API key
 - OpenAI account and API key
 - dotenv for environment variable management
@@ -111,6 +111,10 @@ This repository contains an Express.js-based API for processing, embedding, and 
 - Status 200: Success message.
 - Status 400: Error if index name is not provided.
 - Status 500: Internal server error.
+
+**Steps:**
+- choosing metrics used for querying (cosine,euclidian,2-point)
+- dimensions based on embedding model you are using (azure,openai)  
 
 ---
 
